@@ -49,8 +49,8 @@ export function initializeMcpApiHandler(
     await redisPromise;
     const url = new URL(req.url || "", "https://example.com");
 
-    // Get API key from headers
-    const apiKey = req.headers["x-meeting-baas-api-key"] as string;
+    // Get API key from query parameters
+    const apiKey = url.searchParams.get("apiKey");
     if (!apiKey) {
       res.statusCode = 401;
       res.end("Meeting BaaS API key is required");
