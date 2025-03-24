@@ -60,7 +60,6 @@ export function initializeMcpApiHandler(
     if (url.pathname.endsWith(".ico") || url.pathname.endsWith(".png")) {
       return;
     }
-
     // Only validate API key for SSE and chat endpoints
     let apiKey: string | null = null;
     if (url.pathname === "/sse" || url.pathname === "/message") {
