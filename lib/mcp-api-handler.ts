@@ -60,36 +60,24 @@ export function initializeMcpApiHandler(
     if (url.pathname.endsWith(".ico") || url.pathname.endsWith(".png")) {
       return;
     }
-
     // Only validate API key for SSE and chat endpoints
     let apiKey: string | null = null;
     if (url.pathname === "/sse" || url.pathname === "/message") {
-      if (
-        serverOptions.parameters?.schema &&
-        req.method === "POST" &&
-        req.headers["content-length"]
-      ) {
-        try {
-          const body = await getRawBody(req, {
-            length: req.headers["content-length"],
-            encoding: "utf-8",
-          });
-          const params = JSON.parse(body);
-          const result = serverOptions.parameters.schema.safeParse(params);
-          if (result.success) {
-            apiKey = result.data.apiKey;
-          }
-        } catch (error) {
-          console.error("Error parsing parameters:", error);
-        }
-      } else {
-        // For SSE connections, use environment variable
-        apiKey = process.env.BAAS_API_KEY || null;
-      }
+      // Check for API key in headers first, then fall back to environment variable in dev mode
+      apiKey =
+        (req.headers["x-meeting-baas-api-key"] as string) ||
+        (req.headers["x-api-key"] as string) ||
+        (req.headers["authorization"] as string)?.replace("Bearer ", "") ||
+        (process.env.NODE_ENV === "development"
+          ? process.env.BAAS_API_KEY
+          : null) ||
+        null;
 
       if (!apiKey) {
         res.statusCode = 401;
-        res.end("Meeting BaaS API key is required");
+        res.end(
+          "Meeting BaaS API key is required in x-meeting-baas-api-key, x-api-key, or Authorization header"
+        );
         return;
       }
     }
