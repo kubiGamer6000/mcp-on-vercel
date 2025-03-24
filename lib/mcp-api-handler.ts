@@ -17,7 +17,7 @@ interface SerializedRequest {
 }
 
 export function initializeMcpApiHandler(
-  initializeServer: (server: McpServer) => void,
+  initializeServer: (server: McpServer, apiKey: string) => void,
   serverOptions: ServerOptions = {}
 ) {
   const maxDuration =
@@ -48,6 +48,15 @@ export function initializeMcpApiHandler(
   ) {
     await redisPromise;
     const url = new URL(req.url || "", "https://example.com");
+
+    // Get API key from headers
+    const apiKey = req.headers["x-meeting-baas-api-key"] as string;
+    if (!apiKey) {
+      res.statusCode = 401;
+      res.end("Meeting BaaS API key is required");
+      return;
+    }
+
     if (url.pathname === "/sse") {
       console.log("Got new SSE connection");
 
@@ -60,7 +69,7 @@ export function initializeMcpApiHandler(
         },
         serverOptions
       );
-      initializeServer(server);
+      initializeServer(server, apiKey);
 
       servers.push(server);
 
