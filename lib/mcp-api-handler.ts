@@ -1,4 +1,4 @@
-import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
+import { ServerOptions as McpServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
@@ -6,7 +6,14 @@ import { Socket } from "net";
 import getRawBody from "raw-body";
 import { createClient } from "redis";
 import { Readable } from "stream";
+import z from "zod";
 import vercelJson from "../vercel.json";
+
+interface ServerOptions extends McpServerOptions {
+  parameters?: {
+    schema: z.ZodSchema;
+  };
+}
 
 interface SerializedRequest {
   requestId: string;
@@ -49,8 +56,24 @@ export function initializeMcpApiHandler(
     await redisPromise;
     const url = new URL(req.url || "", "https://example.com");
 
-    // Get API key from query parameters
-    const apiKey = url.searchParams.get("apiKey");
+    // Get API key from parameters schema if available
+    let apiKey: string | null = null;
+    if (serverOptions.parameters?.schema) {
+      try {
+        const body = await getRawBody(req, {
+          length: req.headers["content-length"],
+          encoding: "utf-8",
+        });
+        const params = JSON.parse(body);
+        const result = serverOptions.parameters.schema.safeParse(params);
+        if (result.success) {
+          apiKey = result.data.apiKey;
+        }
+      } catch (error) {
+        console.error("Error parsing parameters:", error);
+      }
+    }
+
     if (!apiKey) {
       res.statusCode = 401;
       res.end("Meeting BaaS API key is required");
