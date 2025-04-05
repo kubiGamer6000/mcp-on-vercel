@@ -73,14 +73,6 @@ export function initializeMcpApiHandler(
           ? process.env.BAAS_API_KEY
           : null) ||
         null;
-
-      if (!apiKey) {
-        res.statusCode = 401;
-        res.end(
-          "Meeting BaaS API key is required in x-meeting-baas-api-key, x-meetingbaas-apikey, x-api-key, or Authorization header"
-        );
-        return;
-      }
     }
 
     if (url.pathname === "/sse") {
@@ -95,7 +87,13 @@ export function initializeMcpApiHandler(
         },
         serverOptions
       );
-      initializeServer(server, apiKey || "");
+
+      try {
+        initializeServer(server, apiKey || "");
+      } catch (error) {
+        console.error("Error initializing server:", error);
+        // Continue without failing - authentication is optional
+      }
 
       servers.push(server);
 
