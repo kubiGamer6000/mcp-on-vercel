@@ -8,6 +8,10 @@ import { createClient } from "redis";
 import { Readable } from "stream";
 import z from "zod";
 import vercelJson from "../vercel.json";
+import { logger } from "./logger";
+
+// Initialize logger at the module level
+logger.initialize();
 
 interface ServerOptions extends McpServerOptions {
   parameters?: {
@@ -30,21 +34,33 @@ export function initializeMcpApiHandler(
   const maxDuration =
     vercelJson?.functions?.["api/server.ts"]?.maxDuration || 800;
   const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
+
   if (!redisUrl) {
+    logger.error("REDIS_URL environment variable is not set");
     throw new Error("REDIS_URL environment variable is not set");
   }
+
+  // Log transport type and environment at initialization
+  logger.info("Initializing MCP API handler", {
+    transportType: process.env.MCP_TRANSPORT_TYPE || "unknown",
+    nodeEnv: process.env.NODE_ENV,
+  });
+
   const redis = createClient({
     url: redisUrl,
   });
   const redisPublisher = createClient({
     url: redisUrl,
   });
+
   redis.on("error", (err) => {
-    console.error("Redis error", err);
+    logger.error("Redis error", { error: err });
   });
+
   redisPublisher.on("error", (err) => {
-    console.error("Redis error", err);
+    logger.error("Redis error", { error: err });
   });
+
   const redisPromise = Promise.all([redis.connect(), redisPublisher.connect()]);
 
   let servers: McpServer[] = [];
@@ -76,7 +92,7 @@ export function initializeMcpApiHandler(
     }
 
     if (url.pathname === "/sse") {
-      console.log("Got new SSE connection");
+      logger.info("Got new SSE connection");
 
       const transport = new SSEServerTransport("/message", res);
       const sessionId = transport.sessionId;
@@ -91,14 +107,14 @@ export function initializeMcpApiHandler(
       try {
         initializeServer(server, apiKey || "");
       } catch (error) {
-        console.error("Error initializing server:", error);
+        logger.error("Error initializing server", { error });
         // Continue without failing - authentication is optional
       }
 
       servers.push(server);
 
       server.server.onclose = () => {
-        console.log("SSE connection closed");
+        logger.info("SSE connection closed");
         servers = servers.filter((s) => s !== server);
       };
 
@@ -117,7 +133,7 @@ export function initializeMcpApiHandler(
 
       // Handles messages originally received via /message
       const handleMessage = async (message: string) => {
-        console.log("Received message from Redis", message);
+        logger.info("Received message from Redis", { message });
         logInContext("log", "Received message from Redis", message);
         const request = JSON.parse(message) as SerializedRequest;
 
@@ -154,23 +170,38 @@ export function initializeMcpApiHandler(
             "log",
             `Request ${sessionId}:${request.requestId} succeeded: ${body}`
           );
+          logger.info(`Request succeeded`, {
+            sessionId,
+            requestId: request.requestId,
+            body,
+          });
         } else {
           logInContext(
             "error",
             `Message for ${sessionId}:${request.requestId} failed with status ${status}: ${body}`
           );
+          logger.error(`Request failed`, {
+            sessionId,
+            requestId: request.requestId,
+            status,
+            body,
+          });
         }
       };
 
       const interval = setInterval(() => {
         for (const log of logs) {
-          console[log.type].call(console, ...log.messages);
+          if (log.type === "log") {
+            logger.info(log.messages.join(" "));
+          } else {
+            logger.error(log.messages.join(" "));
+          }
         }
         logs = [];
       }, 100);
 
       await redis.subscribe(`requests:${sessionId}`, handleMessage);
-      console.log(`Subscribed to requests:${sessionId}`);
+      logger.info(`Subscribed to requests channel`, { sessionId });
 
       let timeout: NodeJS.Timeout;
       let resolveTimeout: (value: unknown) => void;
@@ -185,7 +216,7 @@ export function initializeMcpApiHandler(
         clearTimeout(timeout);
         clearInterval(interval);
         await redis.unsubscribe(`requests:${sessionId}`, handleMessage);
-        console.log("Done");
+        logger.info("Cleanup complete");
         res.statusCode = 200;
         res.end();
       }
@@ -193,10 +224,10 @@ export function initializeMcpApiHandler(
 
       await server.connect(transport);
       const closeReason = await waitPromise;
-      console.log(closeReason);
+      logger.info("Connection closed", { reason: closeReason });
       await cleanup();
     } else if (url.pathname === "/message") {
-      console.log("Received message");
+      logger.info("Received message request");
 
       const body = await getRawBody(req, {
         length: req.headers["content-length"],
@@ -205,6 +236,7 @@ export function initializeMcpApiHandler(
 
       const sessionId = url.searchParams.get("sessionId") || "";
       if (!sessionId) {
+        logger.error("No sessionId provided");
         res.statusCode = 400;
         res.end("No sessionId provided");
         return;
@@ -238,10 +270,11 @@ export function initializeMcpApiHandler(
         `requests:${sessionId}`,
         JSON.stringify(serializedRequest)
       );
-      console.log(`Published requests:${sessionId}`, serializedRequest);
+      logger.info(`Published request to channel`, { sessionId, requestId });
 
       let timeout = setTimeout(async () => {
         await redis.unsubscribe(`responses:${sessionId}:${requestId}`);
+        logger.error("Request timed out", { sessionId, requestId });
         res.statusCode = 408;
         res.end("Request timed out");
       }, 10 * 1000);
@@ -251,6 +284,7 @@ export function initializeMcpApiHandler(
         await redis.unsubscribe(`responses:${sessionId}:${requestId}`);
       });
     } else {
+      logger.warn("Route not found", { path: url.pathname });
       res.statusCode = 404;
       res.end("Not found");
     }
