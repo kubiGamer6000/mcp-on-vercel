@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@meeting-baas/sdk':
-    specifier: ^0.2.4
-    version: 0.2.4
+    specifier: ^0.3.3
+    version: 0.3.3
   '@modelcontextprotocol/sdk':
     specifier: ^1.6.1
     version: 1.9.0
@@ -29,7 +29,7 @@ dependencies:
 
 devDependencies:
   '@types/node':
-    specifier: ^20.11.24
+    specifier: ^20.17.30
     version: 20.17.30
   typescript:
     specifier: ^5.3.3
@@ -37,8 +37,8 @@ devDependencies:
 
 packages:
 
-  /@meeting-baas/sdk@0.2.4:
-    resolution: {integrity: sha512-0sW+QWAnVsglzo1dN682Z9lcuNrkd1PFofddDWRmwsx45qhW1MrUIFnDR/xmbI0fQyBumvEphyjKbq0qvPNXCw==}
+  /@meeting-baas/sdk@0.3.3:
+    resolution: {integrity: sha512-TUAVebeAUF3nePOU5ZPbfZfq6/8+taC9dHjjo4nwvWrRvPew9nh5tpWUc4BHDf4ebNHpxPLiCl9BD6/id+97dg==}
     hasBin: true
     dependencies:
       axios: 1.8.3
