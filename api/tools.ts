@@ -1,72 +1,18 @@
 import { BaasClient } from "@meeting-baas/sdk";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import z from "zod";
+import { registerJoinTool } from "./tools/bots/join";
 
 export function registerTools(server: McpServer, apiKey: string): McpServer {
   const baasClient = new BaasClient({
     apiKey: apiKey,
   });
 
-  // Register Meeting BaaS SDK tools
-  server.tool(
-    "joinMeeting",
-    "Send an AI bot to join a video meeting. The bot can record the meeting, transcribe speech, and provide real-time audio streams. Use this when you want to: 1) Record a meeting 2) Get meeting transcriptions 3) Stream meeting audio 4) Monitor meeting attendance",
-    {
-      meetingUrl: z.string(),
-      botName: z.string(),
-      webhookUrl: z.string().optional(),
-      recordingMode: z.string().optional(),
-      speechToText: z.boolean().optional(),
-      reserved: z.boolean(),
-    },
-    async ({
-      meetingUrl,
-      botName,
-      webhookUrl,
-      recordingMode,
-      speechToText,
-      reserved,
-    }: {
-      meetingUrl: string;
-      botName: string;
-      webhookUrl?: string;
-      recordingMode?: string;
-      speechToText?: boolean;
-      reserved: boolean;
-    }) => {
-      try {
-        const botId = await baasClient.joinMeeting({
-          meetingUrl,
-          botName,
-          webhookUrl,
-          recordingMode,
-          speechToText: speechToText ? { provider: "Default" } : undefined,
-          reserved,
-        });
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Successfully joined meeting with bot ID: ${botId}`,
-            },
-          ],
-        };
-      } catch (error) {
-        console.error("Failed to join meeting:", error);
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Failed to join meeting",
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
-  );
+  // Register bot tools
+  const updatedServer = registerJoinTool(server, baasClient);
 
-  server.tool(
+  // Register Meeting BaaS SDK tools
+  updatedServer.tool(
     "leaveMeeting",
     "Remove an AI bot from a meeting. Use this when you want to: 1) End a meeting recording 2) Stop transcription 3) Disconnect the bot from the meeting",
     { botId: z.string() },
@@ -98,7 +44,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "getMeetingData",
     "Get all data from a meeting including recording, transcript, and metadata. Use this when you want to: 1) Search through meeting transcripts 2) Get meeting recordings 3) Review meeting details 4) Access speaker information",
     { botId: z.string() },
@@ -128,7 +74,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "deleteData",
     "Delete all data from a meeting including recording, transcript, and logs. Use this when you want to: 1) Remove sensitive meeting data 2) Clear meeting recordings 3) Delete transcripts 4) Free up storage space",
     { botId: z.string() },
@@ -158,7 +104,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "createCalendar",
     "Connect a Google or Microsoft calendar to Meeting BaaS. Use this when you want to: 1) Link your work calendar 2) Enable automatic meeting recordings 3) Schedule bots for future meetings 4) Sync your calendar events",
     {
@@ -216,7 +162,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "listCalendars",
     "View all connected calendars. Use this when you want to: 1) See which calendars are linked 2) Check calendar connection status 3) View calendar details 4) Manage calendar integrations",
     {},
@@ -246,7 +192,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "getCalendar",
     "Get detailed information about a specific calendar. Use this when you want to: 1) View calendar settings 2) Check sync status 3) See calendar events 4) Verify calendar connection",
     { uuid: z.string() },
@@ -276,7 +222,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "deleteCalendar",
     "Remove a calendar connection. Use this when you want to: 1) Unlink a calendar 2) Stop automatic recordings 3) Remove calendar access 4) Clean up old integrations",
     { uuid: z.string() },
@@ -308,7 +254,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "resyncAllCalendars",
     "Refresh all calendar data to ensure it's up to date. Use this when you want to: 1) Update meeting schedules 2) Sync new calendar changes 3) Refresh calendar data 4) Fix sync issues",
     {},
@@ -338,7 +284,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "botsWithMetadata",
     "Search and filter through your meeting bots. Use this when you want to: 1) Find specific meetings 2) Filter by date range 3) Search by meeting name 4) View meeting history",
     {
@@ -408,7 +354,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "listEvents",
     "View all events in a calendar. Use this when you want to: 1) See upcoming meetings 2) View past meetings 3) Check meeting schedules 4) Browse calendar events",
     { calendarUuid: z.string() },
@@ -438,7 +384,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "scheduleRecordEvent",
     "Schedule a bot to automatically record a future meeting. Use this when you want to: 1) Set up automatic recording 2) Schedule future transcriptions 3) Plan meeting recordings 4) Enable recurring recordings",
     {
@@ -483,7 +429,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "unscheduleRecordEvent",
     "Cancel a scheduled recording for a meeting. Use this when you want to: 1) Stop automatic recording 2) Cancel future transcriptions 3) Remove scheduled recordings 4) Disable recurring recordings",
     { eventUuid: z.string() },
@@ -513,7 +459,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     }
   );
 
-  server.tool(
+  updatedServer.tool(
     "updateCalendar",
     "Update calendar connection settings. Use this when you want to: 1) Refresh calendar access 2) Update calendar credentials 3) Change calendar settings 4) Fix connection issues",
     {
@@ -575,7 +521,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
   );
 
   // Add a simple echo tool for testing
-  server.tool("echo", { message: z.string() }, async ({ message }) => ({
+  updatedServer.tool("echo", { message: z.string() }, async ({ message }) => ({
     content: [
       {
         type: "text",
@@ -584,7 +530,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     ],
   }));
 
-  return server;
+  return updatedServer;
 }
 
 export default registerTools;
