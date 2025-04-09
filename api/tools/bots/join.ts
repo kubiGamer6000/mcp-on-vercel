@@ -1,15 +1,16 @@
-import { BaasClient } from "@meeting-baas/sdk/dist/generated/baas/api/client";
+import { BaasClient } from "@meeting-baas/sdk/dist/baas/api/client";
+import { 
+  AudioFrequency, 
+  SpeechToTextProvider,
+  JoinRequest,
+  JoinRequestAutomaticLeave,
+  JoinRequestSpeechToText
+} from "@meeting-baas/sdk/dist/baas/models";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 // Constants for configuration based on OpenAPI spec
 const RECORDING_MODES = ['speaker_view', 'gallery_view', 'audio_only'] as const;
-
-// Import the enums and types from the SDK's generated types
-import { AudioFrequency, SpeechToTextProvider } from "@meeting-baas/sdk/dist/generated/baas/models";
-import { JoinRequest } from "@meeting-baas/sdk/dist/generated/baas/models/join-request";
-import { JoinRequestAutomaticLeave } from "@meeting-baas/sdk/dist/generated/baas/models/join-request-automatic-leave";
-import { JoinRequestSpeechToText } from "@meeting-baas/sdk/dist/generated/baas/models/join-request-speech-to-text";
 
 export function registerJoinTool(server: McpServer, baasClient: BaasClient): McpServer {
   server.tool(
@@ -44,8 +45,8 @@ export function registerJoinTool(server: McpServer, baasClient: BaasClient): Mcp
       try {
         // Create the join request using the SDK's types
         const joinRequest: JoinRequest = {
-          meeting_url: params.meetingUrl,
-          bot_name: params.botName,
+          meetingUrl: params.meetingUrl,
+          botName: params.botName,
           bot_image: params.botImage,
           webhook_url: params.webhookUrl,
           recording_mode: params.recordingMode || 'speaker_view',
@@ -72,11 +73,11 @@ export function registerJoinTool(server: McpServer, baasClient: BaasClient): Mcp
           joinRequest
         });
 
-        if (response.data.bot_id) {
+        if (response.data.botId) {
           return {
             content: [{
               type: "text",
-              text: `Successfully joined meeting with bot ID: ${response.data.bot_id} (Speech-to-text enabled by default using ${params.speechToText?.provider || SpeechToTextProvider.default} provider)`
+              text: `Successfully joined meeting with bot ID: ${response.data.botId} (Speech-to-text enabled by default using ${params.speechToText?.provider || SpeechToTextProvider.default} provider)`
             }]
           };
         }

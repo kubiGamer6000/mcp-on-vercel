@@ -1,16 +1,15 @@
-import { BaasClient } from "@meeting-baas/sdk/dist/generated/baas/api/client";
-import { CreateCalendarParams } from "@meeting-baas/sdk/dist/generated/baas/models/create-calendar-params";
-import { UpdateCalendarParams } from "@meeting-baas/sdk/dist/generated/baas/models/update-calendar-params";
-import { BotParam2 } from "@meeting-baas/sdk/dist/generated/baas/models/bot-param2";
+import { BaasClient } from "@meeting-baas/sdk/dist/baas/api/client";
+import { 
+  CreateCalendarParams,
+  UpdateCalendarParams,
+  Provider,
+  BotParam2
+} from "@meeting-baas/sdk/dist/baas/models";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import z from "zod";
 import { registerJoinTool } from "./tools/bots/join";
 import { registerEchoTool } from "./tools/utils/echo";
-import { Provider } from "@meeting-baas/sdk/dist/generated/baas/models/provider";
-import { JoinRequest } from "@meeting-baas/sdk/dist/generated/baas/models/join-request";
-import { JoinRequestAutomaticLeave } from "@meeting-baas/sdk/dist/generated/baas/models/join-request-automatic-leave";
-import { JoinRequestSpeechToText } from "@meeting-baas/sdk/dist/generated/baas/models/join-request-speech-to-text";
-import { SpeechToTextProvider } from "@meeting-baas/sdk/dist/generated/baas/models/speech-to-text-provider";
+
 
 export function registerTools(server: McpServer, apiKey: string): McpServer {
   const baasClient = new BaasClient({
@@ -130,9 +129,9 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     async ({ oauthClientId, oauthClientSecret, oauthRefreshToken, platform, rawCalendarId }) => {
       try {
         let createCalendarParams: CreateCalendarParams = {
-          oauth_client_id: oauthClientId,
-          oauth_client_secret: oauthClientSecret,
-          oauth_refresh_token: oauthRefreshToken,
+          oauthClientId: oauthClientId,
+          oauthClientSecret: oauthClientSecret,
+          oauthRefreshToken: oauthRefreshToken,
           platform: platform === "Google" ? Provider.google : Provider.microsoft,
           raw_calendar_id: rawCalendarId
         };
@@ -367,12 +366,10 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
         // @ts-ignore - SDK type definition issue
         const response = await baasClient.calendarsApi.scheduleRecordEvent({
           botParam2: {
-            bot_name: botName,
+            botName: botName,
             extra: extra || {},
           },
           allOccurrences: false,
-        }, {
-          url: `/calendarEvents/${eventUuid}/bot`
         });
         return {
           content: [
@@ -440,11 +437,11 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     },
     async ({ calendarId, oauthClientId, oauthClientSecret, oauthRefreshToken, platform }) => {
       try {
-        const updateParams: UpdateCalendarParams = {
-          oauth_client_id: oauthClientId,
-          oauth_client_secret: oauthClientSecret,
-          oauth_refresh_token: oauthRefreshToken,
-          platform: platform === "Google" ? Provider.google : Provider.microsoft,
+        let updateParams: UpdateCalendarParams = {
+          oauthClientId: oauthClientId,
+          oauthClientSecret: oauthClientSecret,
+          oauthRefreshToken: oauthRefreshToken,
+          platform: platform === "Google" ? Provider.google : Provider.microsoft
         };
 
         // @ts-ignore - SDK type definition issue
