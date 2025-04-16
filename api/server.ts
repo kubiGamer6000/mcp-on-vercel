@@ -1,10 +1,24 @@
 import { initializeMcpApiHandler } from "../lib/mcp-api-handler";
 import registerTools from "./tools";
 
+// Try to proactively load the SDK to catch any loading errors
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require("@meeting-baas/sdk/dist/baas/api/client.js");
+  console.log("Successfully loaded @meeting-baas/sdk");
+} catch (error) {
+  console.error("Failed to load @meeting-baas/sdk:", error);
+}
+
 const handler = initializeMcpApiHandler(
   (server, apiKey) => {
-    // Register Meeting BaaS SDK tools with the provided API key
-    server = registerTools(server, apiKey);
+    try {
+      // Register Meeting BaaS SDK tools with the provided API key
+      server = registerTools(server, apiKey);
+    } catch (error) {
+      console.error("Error registering tools:", error);
+      throw error;
+    }
   },
   {
     capabilities: {

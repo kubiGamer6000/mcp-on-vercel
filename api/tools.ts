@@ -1,9 +1,9 @@
-import { BaasClient } from "@meeting-baas/sdk/dist/baas/api/client";
-import { Provider } from "@meeting-baas/sdk/dist/baas/models/provider";
+import { BaasClient } from "@meeting-baas/sdk/dist/baas/api/client.js";
+import { Provider } from "@meeting-baas/sdk/dist/baas/models/provider.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import z from "zod";
-import { registerJoinTool } from "./tools/bots/join";
-import { registerEchoTool } from "./tools/utils/echo";
+import { registerJoinTool } from "./tools/bots/join.js";
+import { registerEchoTool } from "./tools/utils/echo.js";
 
 export function registerTools(server: McpServer, apiKey: string): McpServer {
   const baasClient = new BaasClient({
