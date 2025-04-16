@@ -22,7 +22,9 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
       try {
         console.log(`Attempting to remove bot ${botId} from meeting...`);
         //
-        const response = await baasClient.defaultApi.leave({ uuid: botId });
+        const response = await baasClient.defaultApi.leave({
+          params: { uuid: botId },
+        });
         console.log(
           "Leave meeting response:",
           JSON.stringify(response.data, null, 2)
@@ -115,7 +117,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     async ({ botId }: { botId: string }) => {
       try {
         const response = await baasClient.defaultApi.deleteData({
-          uuid: botId,
+          params: { uuid: botId },
         });
         return {
           content: [
@@ -232,7 +234,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
       try {
         //
         const response = await baasClient.calendarsApi.getCalendar({
-          uuid: calendarId,
+          params: { uuid: calendarId },
         });
         return {
           content: [
@@ -265,7 +267,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
       try {
         //
         const response = await baasClient.calendarsApi.deleteCalendar({
-          uuid: calendarId,
+          params: { uuid: calendarId },
         });
         return {
           content: [
@@ -400,15 +402,16 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
           extra: extra || {},
         };
 
-        // Set the URL path parameter
         //
-        baasClient.calendarsApi.setPathParam("uuid", eventUuid);
-
-        //
-        const response = await baasClient.calendarsApi.scheduleRecordEvent({
-          botParam2: botParams,
-          allOccurrences: allOccurrences || false,
-        });
+        const response = await baasClient.calendarsApi.scheduleRecordEvent(
+          {
+            botParam2: botParams,
+            allOccurrences: allOccurrences || false,
+          },
+          {
+            params: { uuid: eventUuid },
+          }
+        );
 
         return {
           content: [
@@ -442,14 +445,15 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     },
     async ({ eventUuid, allOccurrences }) => {
       try {
-        // Set the URL path parameter
         //
-        baasClient.calendarsApi.setPathParam("uuid", eventUuid);
-
-        //
-        const response = await baasClient.calendarsApi.unscheduleRecordEvent({
-          allOccurrences: allOccurrences || false,
-        });
+        const response = await baasClient.calendarsApi.unscheduleRecordEvent(
+          {
+            allOccurrences: allOccurrences || false,
+          },
+          {
+            params: { uuid: eventUuid },
+          }
+        );
 
         return {
           content: [

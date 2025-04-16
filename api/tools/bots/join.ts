@@ -120,41 +120,42 @@ export function registerJoinTool(
         // Join the meeting using the BaaS SDK
         const joinRequest = {
           joinRequest: {
-            meeting_url: params.meetingUrl,
-            bot_name: params.botName,
-            bot_image: params.botImage,
-            webhook_url: params.webhookUrl,
-            recording_mode: params.recordingMode || "speaker_view",
-            speech_to_text: {
+            meetingUrl: params.meetingUrl,
+            botName: params.botName,
+            botImage: params.botImage,
+            webhookUrl: params.webhookUrl,
+            recordingMode: params.recordingMode || "speaker_view",
+            speechToText: params.speechToText && {
               provider:
-                params.speechToText?.provider || SpeechToTextProvider.gladia,
-              api_key: params.speechToText?.apiKey,
+                params.speechToText.provider || SpeechToTextProvider.gladia,
+              apiKey: params.speechToText.apiKey,
             },
-            reserved: params.reserved,
             streaming: params.streaming && {
+              audioFrequency: params.streaming.audioFrequency,
               input: params.streaming.input,
               output: params.streaming.output,
-              audio_frequency: params.streaming.audioFrequency,
             },
-            automatic_leave: params.automaticLeave && {
-              noone_joined_timeout: params.automaticLeave.nooneJoinedTimeout,
-              waiting_room_timeout: params.automaticLeave.waitingRoomTimeout,
+            reserved: params.reserved || false,
+            automaticLeave: params.automaticLeave && {
+              nooneJoinedTimeout: params.automaticLeave.nooneJoinedTimeout,
+              waitingRoomTimeout: params.automaticLeave.waitingRoomTimeout,
             },
-            start_time: params.startTime,
-            deduplication_key: params.deduplicationKey,
+            startTime: params.startTime,
+            deduplicationKey: params.deduplicationKey,
+            entryMessage: params.entryMessage,
             extra: params.extra,
           },
         };
 
         const response = await baasClient.defaultApi.join(joinRequest);
 
-        if (response.data.bot_id) {
+        if (response.data.botId) {
           return {
             content: [
               {
                 type: "text",
                 text: `Successfully joined meeting with bot ID: ${
-                  response.data.bot_id
+                  response.data.botId
                 } (Speech-to-text enabled by default using ${
                   params.speechToText?.provider || SpeechToTextProvider.default
                 } provider)`,
