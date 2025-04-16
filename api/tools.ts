@@ -21,7 +21,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     async ({ botId }: { botId: string }) => {
       try {
         console.log(`Attempting to remove bot ${botId} from meeting...`);
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.defaultApi.leave({ uuid: botId });
         console.log(
           "Leave meeting response:",
@@ -83,7 +83,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     { botId: z.string() },
     async ({ botId }: { botId: string }) => {
       try {
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.defaultApi.getMeetingData({ botId });
         return {
           content: [
@@ -114,7 +114,6 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     { botId: z.string() },
     async ({ botId }: { botId: string }) => {
       try {
-        // @ts-ignore - SDK type definition issue
         const response = await baasClient.defaultApi.deleteData({
           uuid: botId,
         });
@@ -168,7 +167,6 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
           rawCalendarId,
         };
 
-        // @ts-ignore - SDK type definition issue
         const response = await baasClient.calendarsApi.createCalendar({
           createCalendarParams: calendarParams,
         });
@@ -232,7 +230,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     { calendarId: z.string() },
     async ({ calendarId }: { calendarId: string }) => {
       try {
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.calendarsApi.getCalendar({
           uuid: calendarId,
         });
@@ -265,7 +263,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     { calendarId: z.string() },
     async ({ calendarId }: { calendarId: string }) => {
       try {
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.calendarsApi.deleteCalendar({
           uuid: calendarId,
         });
@@ -328,7 +326,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     {},
     async () => {
       try {
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.defaultApi.botsWithMetadata();
         return {
           content: [
@@ -359,7 +357,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
     { calendarId: z.string() },
     async ({ calendarId }) => {
       try {
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.calendarsApi.listEvents({
           calendarId,
         });
@@ -393,19 +391,23 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
       eventUuid: z.string(),
       botName: z.string(),
       extra: z.record(z.unknown()).optional(),
+      allOccurrences: z.boolean().optional(),
     },
-    async ({ eventUuid, botName, extra }) => {
+    async ({ eventUuid, botName, extra, allOccurrences }) => {
       try {
         const botParams = {
           botName,
           extra: extra || {},
         };
 
-        // @ts-ignore - SDK type definition issue
+        // Set the URL path parameter
+        //
+        baasClient.calendarsApi.setPathParam("uuid", eventUuid);
+
+        //
         const response = await baasClient.calendarsApi.scheduleRecordEvent({
-          uuid: eventUuid,
           botParam2: botParams,
-          allOccurrences: false,
+          allOccurrences: allOccurrences || false,
         });
 
         return {
@@ -434,14 +436,21 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
   updatedServer.tool(
     "unscheduleRecordEvent",
     "Cancel a scheduled recording. Use this when you want to: 1) Cancel automatic recording 2) Stop planned transcription 3) Remove scheduled bot activity",
-    { eventUuid: z.string() },
-    async ({ eventUuid }: { eventUuid: string }) => {
+    {
+      eventUuid: z.string(),
+      allOccurrences: z.boolean().optional(),
+    },
+    async ({ eventUuid, allOccurrences }) => {
       try {
-        // @ts-ignore - SDK type definition issue
+        // Set the URL path parameter
+        //
+        baasClient.calendarsApi.setPathParam("uuid", eventUuid);
+
+        //
         const response = await baasClient.calendarsApi.unscheduleRecordEvent({
-          uuid: eventUuid,
-          allOccurrences: false,
+          allOccurrences: allOccurrences || false,
         });
+
         return {
           content: [
             {
@@ -491,7 +500,7 @@ export function registerTools(server: McpServer, apiKey: string): McpServer {
             platform === "Google" ? Provider.google : Provider.microsoft,
         };
 
-        // @ts-ignore - SDK type definition issue
+        //
         const response = await baasClient.calendarsApi.updateCalendar({
           updateCalendarParams: updateParams,
         });
