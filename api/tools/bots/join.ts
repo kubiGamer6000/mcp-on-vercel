@@ -16,6 +16,7 @@ export function registerJoinTool(
       meetingUrl: z.string().url().describe("URL of the meeting to join"),
       botName: z
         .string()
+        .optional()
         .describe("Name to display for the bot in the meeting"),
       botImage: z
         .string()
@@ -100,12 +101,13 @@ export function registerJoinTool(
         .describe(
           "We prevent multiple bots with same API key joining a meeting within 5 mins, unless overridden by deduplication_key."
         ),
-      extra: z
-        .record(z.unknown())
-        .optional()
-        .describe(
-          "A Json object that allows you to add custom data to a bot for your convenience, e.g. your end user's ID."
-        ),
+      extra: z.object({
+        jid: z
+          .string()
+          .describe(
+            "The user/group's JID to send update messages to - IMPORTANT FOR CORRECTLY SENDING MESSAGE BACK"
+          ),
+      }),
     },
     async (params) => {
       try {
@@ -113,23 +115,16 @@ export function registerJoinTool(
         // Need to cast to any due to field name differences between our snake_case and the SDK types
         const joinRequest: any = {
           meeting_url: params.meetingUrl,
-          bot_name: params.botName,
+          bot_name: params.botName || "Scandinaviansmiles AI",
           bot_image:
             params.botImage ||
-            "https://meetingbaas.com/static/a3e9f3dbde935920a3558317a514ff1a/b5380/preview.png",
+            "https://cdn.shopify.com/s/files/1/0663/8177/5042/files/ai.jpg?v=1746978978",
           webhook_url: params.webhookUrl,
           recording_mode: params.recordingMode || "speaker_view",
-          speech_to_text: params.speechToText
+          speech_to_text: process.env.GLADIA_API_KEY
             ? {
-                provider:
-                  params.speechToText.provider === "default"
-                    ? "Default"
-                    : params.speechToText.provider === "gladia"
-                    ? "Gladia"
-                    : params.speechToText.provider === "runpod"
-                    ? "Runpod"
-                    : "Default",
-                api_key: params.speechToText.apiKey,
+                provider: "Gladia",
+                api_key: process.env.GLADIA_API_KEY,
               }
             : {
                 provider: "Default",
