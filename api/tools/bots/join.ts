@@ -116,9 +116,7 @@ export function registerJoinTool(
         const joinRequest: any = {
           meeting_url: params.meetingUrl,
           bot_name: params.botName || "Scandinaviansmiles AI",
-          bot_image:
-            params.botImage ||
-            "https://cdn.shopify.com/s/files/1/0663/8177/5042/files/ai.jpg?v=1746978978",
+          bot_image: params.botImage || "",
           webhook_url: params.webhookUrl || process.env.WEBHOOK_URL,
           recording_mode: params.recordingMode || "speaker_view",
           speech_to_text: process.env.GLADIA_API_KEY
