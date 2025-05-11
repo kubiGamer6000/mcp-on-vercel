@@ -50,7 +50,7 @@ export function registerJoinTool(
           apiKey: z.string().optional(),
         })
         .default({ provider: "default" })
-        .describe("The speech to text provider, defaults to Gladia."),
+        .describe("The speech to text provider, defaults to Gladia. "),
       streaming: z
         .object({
           input: z
