@@ -119,7 +119,7 @@ export function registerJoinTool(
           bot_image:
             params.botImage ||
             "https://cdn.shopify.com/s/files/1/0663/8177/5042/files/ai.jpg?v=1746978978",
-          webhook_url: params.webhookUrl,
+          webhook_url: params.webhookUrl || process.env.WEBHOOK_URL,
           recording_mode: params.recordingMode || "speaker_view",
           speech_to_text: process.env.GLADIA_API_KEY
             ? {
